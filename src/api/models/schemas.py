@@ -49,11 +49,13 @@ class PredictFeatures(BaseModel):
 
 
 class PredictRequest(BaseModel):
+    reference_id: str | None = Field(default=None, max_length=120)
     features: PredictFeatures
 
     model_config = {
         "json_schema_extra": {
             "example": {
+                "reference_id": "queue-123",
                 "features": PREDICT_FEATURES_EXAMPLE,
             }
         }
@@ -61,6 +63,7 @@ class PredictRequest(BaseModel):
 
 
 class PredictResponse(BaseModel):
+    reference_id: str | None = None
     prediction: ChurnLabelEnum
     churn_probability: float
     risk_level: RiskLevelEnum
@@ -77,9 +80,11 @@ class BatchPredictRequest(BaseModel):
             "example": {
                 "items": [
                     {
+                        "reference_id": "queue-123",
                         "features": PREDICT_FEATURES_EXAMPLE,
                     },
                     {
+                        "reference_id": "queue-124",
                         "features": {
                             **PREDICT_FEATURES_EXAMPLE,
                             "ano_modelo": 2023,
@@ -95,6 +100,10 @@ class BatchPredictRequest(BaseModel):
             }
         }
     }
+
+
+class BatchPredictResponse(BaseModel):
+    items: list[PredictResponse]
 
 
 class DemoTokenResponse(BaseModel):

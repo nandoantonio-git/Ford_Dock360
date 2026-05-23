@@ -91,8 +91,8 @@ def test_predict_batch_retorna_lista_de_respostas_vetorizada():
     }
 
     items = [
-        PredictRequest(features=features_1),
-        PredictRequest(features=features_2),
+        PredictRequest(reference_id="queue-1", features=features_1),
+        PredictRequest(reference_id="queue-2", features=features_2),
     ]
 
     try:
@@ -105,6 +105,8 @@ def test_predict_batch_retorna_lista_de_respostas_vetorizada():
         assert all(isinstance(response, PredictResponse) for response in responses)
         assert responses[0].prediction == "no_churn"
         assert responses[1].prediction == "churn"
+        assert responses[0].reference_id == "queue-1"
+        assert responses[1].reference_id == "queue-2"
         assert responses[0].perfil_previsto == "recorrente"
         assert responses[1].perfil_previsto == "inativo"
         assert responses[0].probabilidades_perfil is None

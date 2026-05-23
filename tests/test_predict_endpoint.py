@@ -63,12 +63,29 @@ def test_predict_admin_retorna_200(client, admin_headers):
 def test_predict_batch_analyst_retorna_200(client, analyst_headers):
     payload = {
         "items": [
-            {"features": _FEATURES},
-            {"features": {**_FEATURES, "ano_modelo": 2020}},
+            {"reference_id": "queue-1", "features": _FEATURES},
+            {"reference_id": "queue-2", "features": {**_FEATURES, "ano_modelo": 2020}},
         ]
     }
     with patch("src.api.routers.predict.predictor_service") as mock_svc:
-        mock_svc.predict_batch.return_value = [_MOCK_RESPONSE, _MOCK_RESPONSE]
+        mock_svc.predict_batch.return_value = [
+            _MOCK_RESPONSE.model_copy(update={"reference_id": "queue-1"}),
+            _MOCK_RESPONSE.model_copy(update={"reference_id": "queue-2"}),
+        ]
+        response = client.post("/predict-batch", json=payload, headers=analyst_headers)
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body["items"]) == 2
+    assert body["items"][0]["reference_id"] == "queue-1"
+    assert body["items"][1]["reference_id"] == "queue-2"
+
+
+def test_predict_batch_sem_reference_id_mantem_compatibilidade(client, analyst_headers):
+    payload = {"items": [{"features": _FEATURES}]}
+    with patch("src.api.routers.predict.predictor_service") as mock_svc:
+        mock_svc.predict_batch.return_value = [_MOCK_RESPONSE]
         response = client.post("/predict/batch", json=payload, headers=analyst_headers)
     assert response.status_code == 200
-    assert len(response.json()) == 2
+    body = response.json()
+    assert len(body["items"]) == 1
+    assert body["items"][0]["reference_id"] is None

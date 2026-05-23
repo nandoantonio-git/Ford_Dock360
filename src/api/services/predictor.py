@@ -189,6 +189,7 @@ class PredictorService:
         label, prob_churn, risk = self._predict_churn(frame)
         perfil, _ = self._predict_perfil(frame)
         return PredictResponse(
+            reference_id=None,
             prediction=label,
             churn_probability=prob_churn,
             risk_level=risk,
@@ -210,6 +211,7 @@ class PredictorService:
             label, prob_churn, risk = churn
             perfil, _ = perfil_result
             responses.append(PredictResponse(
+                reference_id=item.reference_id,
                 prediction=label,
                 churn_probability=prob_churn,
                 risk_level=risk,
