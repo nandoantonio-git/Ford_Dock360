@@ -219,11 +219,11 @@ Variáveis criadas/configuradas no Render:
 Observação importante: `models/` e `data/` não são versionados. Por isso, o
 deploy tem dois níveis:
 
-- Sem URLs de modelo: `/` e `/docs` sobem para demonstrar a API; `/health`
+- Sem URLs de modelo: `/` sobe para liveness; `/health`
   retorna `503 degraded` porque os artefatos ainda não existem.
 - Com `CHURN_MODEL_URL` e `PERFIL_MODEL_URL`: o script
   `scripts/fetch_model_artifacts.py` baixa os `.joblib` para `MODELS_DIR` antes
-  do Uvicorn iniciar. Com os checksums corretos, `/health`, `/predict` e
+  do Uvicorn iniciar. Com os checksums corretos, `/health`, `/predict`,
   `/predict-batch` e `/predict/batch` ficam prontos para demo.
 
 As URLs dos artefatos devem ser configuradas no painel do Render ou preenchidas
@@ -294,14 +294,15 @@ docker run --rm -p 8000:8000 \
 
 No Azure Container Apps, configure ingress HTTP externo para a porta alvo
 `8000`. O endpoint `/` valida liveness, `/health` valida a disponibilidade dos
-modelos e `/docs` abre o Swagger.
+modelos. A documentação Swagger não fica exposta no código atual porque o
+OpenAPI público está desabilitado na aplicação FastAPI.
 
 Não commitar `.env`, datasets reais, arquivos em `data/raw`,
 `data/processed`, `models/*.joblib`, URLs assinadas ou segredos usados no Azure.
 
 ## Observação para Avaliação Acadêmica
 
-Por questões de tamanho e segurança, os datasets reais e artefatos `.joblib` não são versionados no GitHub. Para reprodução completa, é necessário disponibilizar os arquivos em `data/raw/`, configurar `CHURN_MODEL_URL` e `PERFIL_MODEL_URL` com os artefatos treinados, ou executar o pipeline completo a partir dos dados brutos autorizados. Sem os artefatos de modelo, a API sobe parcialmente para inspeção do Swagger, mas os endpoints de predição dependem dos arquivos `.joblib`.
+Por questões de tamanho e segurança, os datasets reais e artefatos `.joblib` não são versionados no GitHub. Para reprodução completa, é necessário disponibilizar os arquivos em `data/raw/`, configurar `CHURN_MODEL_URL` e `PERFIL_MODEL_URL` com os artefatos treinados, ou executar o pipeline completo a partir dos dados brutos autorizados. Sem os artefatos de modelo, a API sobe parcialmente para inspeção via `/` e `/health`, mas os endpoints de predição dependem dos arquivos `.joblib`.
 
 ## Testes
 ```bash
