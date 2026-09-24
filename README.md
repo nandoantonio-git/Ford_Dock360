@@ -107,6 +107,51 @@ Esse comando compara Logistic Regression balanceada, RandomForest balanceado e
 RandomForest calibrado, registrando AUC-ROC, AUC-PR, precision, recall e F1 no
 MLflow e na tabela `reports/model_comparison_churn.csv`.
 
+## Evidências Visuais
+
+As imagens abaixo são geradas pelo pipeline/notebooks e servem como prints de
+apoio para a banca.
+
+### EDA da base bruta
+
+Distribuição dos modelos na base de ordens de serviço:
+
+![Distribuição por modelo](reports/base1_modelos.png)
+
+Distribuição por tipo de serviço:
+
+![Distribuição por tipo de serviço](reports/base1_service_type.png)
+
+### EDA da base modelável
+
+Distribuição do target de churn:
+
+![Distribuição de churn](reports/base2_distribuicao_churn.png)
+
+Correlação entre features comportamentais e churn:
+
+![Correlação com churn](reports/base2_correlacao_churn.png)
+
+### Segmentação comportamental
+
+Escolha de `k` por elbow/silhouette:
+
+![Elbow e silhouette](reports/elbow_silhouette_pos_venda.png)
+
+Visualização PCA dos clusters:
+
+![Clusters por PCA](reports/clusters_pca_pos_venda.png)
+
+### Classificação de churn
+
+Curva Precision-Recall:
+
+![Curva Precision-Recall](reports/precision_recall_churn_pos_venda.png)
+
+Matriz de confusão:
+
+![Matriz de confusão](reports/confusion_matrix_churn_pos_venda.png)
+
 ## Notas de Entrega
 
 - Arquivos de experimentos antigos foram removidos do escopo atual.
