@@ -96,6 +96,17 @@ Registra os artefatos já gerados dos experimentos de churn, segmentação
 K-Means. Esse passo é evidência de experimentação; não é necessário para a API
 em runtime.
 
+Para evidenciar a comparação de algoritmos/configurações exigida em IA & ML:
+
+```bash
+python -m src.pipeline.mlflow_tracking --only churn-comparison \
+  --comparison-output reports/model_comparison_churn.csv
+```
+
+Esse comando compara Logistic Regression balanceada, RandomForest balanceado e
+RandomForest calibrado, registrando AUC-ROC, AUC-PR, precision, recall e F1 no
+MLflow e na tabela `reports/model_comparison_churn.csv`.
+
 ## Notas de Entrega
 
 - Arquivos de experimentos antigos foram removidos do escopo atual.
@@ -112,6 +123,11 @@ O ciclo de vida do Ford VinGuard está documentado em
 `docs/politica_retreino.md`. A política define retreino programado trimestral,
 validação da maturação de 18 meses do rótulo, gate champion/challenger,
 evidências em JSON + MLflow, menor privilégio e autorização explícita.
+
+A aderência aos requisitos de IA & Machine Learning da Sprint 3 está resumida
+em `docs/ia_ml_requisitos.md`, incluindo compreensão do problema, preparação
+dos dados, comparação de modelos/configurações, métricas e conclusão do modelo
+selecionado.
 
 O histórico de versões aprovadas e o procedimento de rollback seguro ficam em
 `CHANGELOG_MODELOS.md`. Rollback válido deve apontar para artefato aprovado e

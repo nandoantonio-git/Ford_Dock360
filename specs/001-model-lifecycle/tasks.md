@@ -151,6 +151,14 @@
 
 **Purpose**: Final checks, cleanup and acceptance runbook.
 
+### IA/ML rubric evidence addendum
+
+- [X] T071 [P] Add MLflow churn model comparison across algorithms/configurations in `src/pipeline/mlflow_tracking.py`
+- [X] T072 [P] Add IA/ML rubric coverage document in `docs/ia_ml_requisitos.md`
+- [X] T073 Validate rubric evidence with `python3 -m src.pipeline.mlflow_tracking --help` and focused lifecycle tests
+
+### Final validation tasks
+
 - [ ] T061 Run focused lifecycle test suite with `pytest tests/test_model_lifecycle.py -v`
 - [ ] T062 Run leakage regression tests with `pytest tests/test_leakage.py -v`
 - [ ] T063 Run CLI help checks for all lifecycle modules listed in `specs/001-model-lifecycle/quickstart.md`

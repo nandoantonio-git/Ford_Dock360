@@ -8,6 +8,10 @@ import pytest
 
 from src.pipeline.feature_engineering_real import build_snapshot
 from src.pipeline.leakage_checks import check_leakage, check_temporal_leakage
+from src.pipeline.mlflow_tracking import (
+    _select_best_churn_candidate,
+    _summarize_churn_metrics,
+)
 from src.pipeline.model_lifecycle_utils import (
     build_artifact_manifest,
     sha256_file,
@@ -185,3 +189,55 @@ def test_retrain_trigger_requires_authorization():
 
     assert result.returncode != 0
     assert "autorizacao explicita obrigatoria" in result.stderr
+
+
+def test_select_best_churn_candidate_uses_auc_pr_then_auc_roc():
+    rows = [
+        {"model_name": "rf_a", "auc_pr": 0.30, "auc_roc": 0.80},
+        {"model_name": "rf_b", "auc_pr": 0.35, "auc_roc": 0.78},
+        {"model_name": "rf_c", "auc_pr": 0.35, "auc_roc": 0.82},
+    ]
+
+    best = _select_best_churn_candidate(rows)
+
+    assert best["model_name"] == "rf_c"
+
+
+def test_summarize_churn_metrics_returns_required_fields():
+    y_true = [0, 0, 1, 1]
+    y_score = [0.1, 0.4, 0.6, 0.9]
+
+    metrics = _summarize_churn_metrics(y_true, y_score, threshold=0.5)
+
+    assert set(metrics) == {"auc_roc", "auc_pr", "precision", "recall", "f1"}
+    assert metrics["auc_roc"] == 1.0
+    assert metrics["auc_pr"] == 1.0
+    assert metrics["precision"] == 1.0
+    assert metrics["recall"] == 1.0
+    assert metrics["f1"] == 1.0
+
+
+def test_mlflow_tracking_help_exposes_churn_comparison():
+    result = subprocess.run(
+        [sys.executable, "-m", "src.pipeline.mlflow_tracking", "--help"],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+
+    assert "churn-comparison" in result.stdout
+    assert "--comparison-output" in result.stdout
+
+
+def test_mlflow_tracking_defines_churn_model_comparison_candidates():
+    source = (ROOT / "src" / "pipeline" / "mlflow_tracking.py").read_text(encoding="utf-8")
+
+    for expected in [
+        "LogisticRegression_Balanced",
+        "RandomForest_Balanced",
+        "RandomForest_Calibrated",
+        "auc_pr",
+        "model_comparison_churn.csv",
+    ]:
+        assert expected in source

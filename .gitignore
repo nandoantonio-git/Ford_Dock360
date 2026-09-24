@@ -3,6 +3,7 @@ data/raw/*.csv
 data/processed/
 models/
 reports/*
+!reports/model_comparison_churn.csv
 !reports/model_lifecycle/
 !reports/model_lifecycle/.gitkeep
 !reports/model_lifecycle/*.json
