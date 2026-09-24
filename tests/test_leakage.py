@@ -1,7 +1,7 @@
 import pytest
 import pandas as pd
 from src.pipeline.config import LEAKAGE_COLUMNS, TARGET_CHURN
-from src.pipeline.train_churn_real import check_leakage, check_temporal_leakage
+from src.pipeline.leakage_checks import check_leakage, check_temporal_leakage
 
 def test_leakage_detection():
     for col in LEAKAGE_COLUMNS:

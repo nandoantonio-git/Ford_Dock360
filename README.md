@@ -106,6 +106,27 @@ em runtime.
 - Evite reexecutar treino sem necessidade antes da entrega, pois isso altera
   modelos e checksums.
 
+## Ciclo de Vida do Modelo
+
+O ciclo de vida do Ford VinGuard está documentado em
+`docs/politica_retreino.md`. A política define retreino programado trimestral,
+validação da maturação de 18 meses do rótulo, gate champion/challenger,
+evidências em JSON + MLflow, menor privilégio e autorização explícita.
+
+O histórico de versões aprovadas e o procedimento de rollback seguro ficam em
+`CHANGELOG_MODELOS.md`. Rollback válido deve apontar para artefato aprovado e
+verificável por SHA256; backup local informal não é evidência suficiente.
+
+Resumo operacional:
+
+- O gatilho de retreino gera apenas artefatos candidatos isolados.
+- O gate de promoção roda em modo relatório por padrão e só promove com ação
+  explícita.
+- AUC-ROC continua reportada para compatibilidade; AUC-PR decide promoção.
+- O Java BFF é o consumidor técnico da API de ML via `X-ML-Service-Token`.
+- O consultor recebe `perfil_previsto`, `risk_level`, `acao_recomendada` e
+  prioridade; a UI não deve expor probabilidade crua como linguagem principal.
+
 ## API FastAPI
 
 Endpoints oficiais da API:

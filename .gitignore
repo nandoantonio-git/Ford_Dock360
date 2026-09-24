@@ -2,7 +2,10 @@ data/raw/*.xlsx
 data/raw/*.csv
 data/processed/
 models/
-reports/
+reports/*
+!reports/model_lifecycle/
+!reports/model_lifecycle/.gitkeep
+!reports/model_lifecycle/*.json
 .codex/
 .claude/
 .venv/

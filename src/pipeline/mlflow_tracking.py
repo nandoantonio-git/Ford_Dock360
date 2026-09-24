@@ -22,7 +22,7 @@ from src.pipeline.config import (
 )
 from src.pipeline.clustering_real import _make_pipeline
 from src.pipeline.train_churn_real import _build_preprocessor as build_preprocessor_churn
-from src.pipeline.train_churn_real import check_temporal_leakage
+from src.pipeline.leakage_checks import check_temporal_leakage
 
 VINS_PATH = "data/processed/dataset_churn_pos_venda.csv"
 TRACKING_URI = "file:./mlruns"

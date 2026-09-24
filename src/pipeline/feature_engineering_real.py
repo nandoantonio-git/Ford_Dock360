@@ -5,6 +5,7 @@ Gera uma linha por VIN usando somente historico de servicos ate DATA_CORTE.
 O target observa retorno futuro dentro da janela operacional de churn.
 """
 
+import argparse
 import os
 
 import numpy as np
@@ -69,7 +70,7 @@ def _validar_janela_observacao(df, data_corte, janela_churn_meses):
     return fim_janela, data_max, janela_observavel
 
 
-def build_snapshot(df, data_corte, janela_churn_meses=JANELA_CHURN_MESES):
+def build_snapshot(df, data_corte, janela_churn_meses=JANELA_CHURN_MESES, fail_on_immature_window=False):
     data_corte = pd.Timestamp(data_corte)
     df = parsear_datas(df.copy())
     df = limpar_outliers(df)
@@ -78,6 +79,12 @@ def build_snapshot(df, data_corte, janela_churn_meses=JANELA_CHURN_MESES):
     fim_janela, data_max, janela_observavel = _validar_janela_observacao(
         df, data_corte, janela_churn_meses
     )
+    if fail_on_immature_window and not janela_observavel:
+        raise ValueError(
+            "Janela futura de churn imatura para o corte solicitado: "
+            f"fim_janela={fim_janela.date()} > "
+            f"data_max_observada={data_max.date() if pd.notna(data_max) else 'NaT'}"
+        )
 
     historico = df[df["ServiceDate_dt"] <= data_corte].copy()
     futuro = df[
@@ -197,17 +204,36 @@ def validar_snapshot(snapshot):
         print(f"  {col}: {n_missing:,} ({pct:.2f}%)")
 
 
-def main():
-    os.makedirs("data/processed", exist_ok=True)
+def _parse_args():
+    parser = argparse.ArgumentParser(description="Gera snapshot pos-venda por VIN com corte temporal.")
+    parser.add_argument("--data-corte", default=DATA_CORTE)
+    parser.add_argument("--janela-churn-meses", type=int, default=JANELA_CHURN_MESES)
+    parser.add_argument("--output-dir", default="data/processed")
+    parser.add_argument("--input-path", default=INPUT_PATH)
+    parser.add_argument("--fail-on-immature-window", action="store_true")
+    return parser.parse_args()
 
-    df = carregar_ordens_servico()
-    snapshot = build_snapshot(df, DATA_CORTE, JANELA_CHURN_MESES)
+
+def main(args=None):
+    args = args or _parse_args()
+    os.makedirs(args.output_dir, exist_ok=True)
+
+    output_path = os.path.join(args.output_dir, "snapshots_pos_venda.csv")
+    churn_dataset_path = os.path.join(args.output_dir, "dataset_churn_pos_venda.csv")
+
+    df = carregar_ordens_servico(args.input_path)
+    snapshot = build_snapshot(
+        df,
+        args.data_corte,
+        args.janela_churn_meses,
+        fail_on_immature_window=args.fail_on_immature_window,
+    )
     validar_snapshot(snapshot)
 
-    snapshot.to_csv(OUTPUT_PATH, index=False)
-    snapshot.to_csv(CHURN_DATASET_PATH, index=False)
-    print(f"\nSalvo em: {OUTPUT_PATH}")
-    print(f"Salvo em: {CHURN_DATASET_PATH}")
+    snapshot.to_csv(output_path, index=False)
+    snapshot.to_csv(churn_dataset_path, index=False)
+    print(f"\nSalvo em: {output_path}")
+    print(f"Salvo em: {churn_dataset_path}")
     print(f"Shape: {snapshot.shape}")
     return snapshot
 
