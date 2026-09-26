@@ -77,7 +77,7 @@ def test_predict_service_token_invalido_retorna_401(client):
     assert response.status_code in {401, 403}
 
 
-def test_predict_authorization_bearer_service_token_retorna_200(client):
+def test_predict_authorization_bearer_service_token_retorna_401(client):
     with patch("src.api.routers.predict.predictor_service") as mock_svc:
         mock_svc.predict.return_value = _MOCK_RESPONSE
         response = client.post(
@@ -85,7 +85,7 @@ def test_predict_authorization_bearer_service_token_retorna_200(client):
             json={"features": _FEATURES},
             headers={"Authorization": "Bearer test-service-token-fixed"},
         )
-    assert response.status_code == 200
+    assert response.status_code == 401
 
 
 def test_predict_batch_analyst_retorna_200(client, analyst_headers):
