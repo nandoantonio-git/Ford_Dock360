@@ -5,6 +5,8 @@ Versão proposta: `v1.5-sprint3-ia-ml`. Status: preparação para revisão.
 Esta entrega apoia retenção no pós-venda por risco de abandono da rede e
 segmentos comportamentais. A [matriz da rubrica](ia_ml_requisitos.md) apresenta
 problema, preparação, desenvolvimento, avaliação e conclusão.
+O [guia de entrega](guia_entrega.md) orienta a leitura dos arquivos e a
+preparação do ambiente para reprodução e inferência local.
 
 ## Novidades e melhorias
 
@@ -81,7 +83,28 @@ Gate de promoção, drift e rollback automatizado ainda não estão implementado
 ## Validação
 
 Parâmetros e métricas documentados foram conferidos contra código e CSV.
-A tentativa anterior de pytest foi interrompida sem resultado conclusivo;
-esta revisão documental não declara a suíte aprovada. Antes de publicar uma
-versão validada, registrar uma execução concluída dos testes e confirmar o
-commit/tag da entrega. Não houve promoção de modelos.
+A suíte concluiu com **134 testes aprovados, 20 avisos e nenhuma falha**, em
+12,13 segundos, após corrigir o isolamento dos relatórios gerados no teste de
+treinamento. Os gráficos versionados permaneceram intactos após a execução.
+
+Comando: `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest tests/ -q -p no:cacheprovider`.
+Ambiente: Python 3.10.11, pytest 9.0.3, scikit-learn 1.4.2, pandas 2.2.2,
+NumPy 1.26.4, FastAPI 0.111.0 e MLflow 2.11.3. Os avisos incluem deprecações
+de dependências e precisão indefinida em cenários sintéticos dos testes.
+O ambiente virtual anterior apresentou bloqueios de leitura; a execução
+validada utilizou o Python do sistema. Python 3.11 permanece a versão
+declarada para reprodução, ainda sem nova validação em ambiente limpo.
+
+Separadamente da suíte, os checksums dos dois modelos reais foram confirmados
+contra os respectivos arquivos `.sha256`:
+
+- Churn: `cdb66a10f6a9191d5dee93de0c0a137feef28c6f64bae1bee16eec0e8fbcfd0e`.
+- K-Means: `555f8adf133c2b01556839b2988f4cae524d756d7de3ac5f85b52cfae63415df`.
+
+Um smoke test local autenticado, com cópias temporárias dos modelos reais,
+retornou HTTP 200 em `/predict` e `/predict-batch`. O exemplo do schema retornou
+probabilidade 0,886767, risco `high`, segmento `multidealer` e ação preenchida;
+o lote preservou os dois identificadores enviados. Isso confirma carregamento
+e funcionamento nesse exemplo, não recalcula métricas do holdout nem comprova
+que os artefatos pertencem à execução do notebook.
+Não houve retreino real, integração Azure nem promoção de modelos.
