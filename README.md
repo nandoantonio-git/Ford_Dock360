@@ -92,8 +92,8 @@ Gera os arquivos `.joblib` em `models/`.
 python -m src.pipeline.mlflow_tracking
 mlflow ui --backend-store-uri ./mlruns
 ```
-Registra os artefatos já gerados dos experimentos de churn, segmentação
-K-Means. Esse passo é evidência de experimentação; não é necessário para a API
+Executa experimentos de churn e segmentação K-Means e registra suas métricas
+e artefatos. Esse passo é evidência de experimentação; não é necessário para a API
 em runtime.
 
 Para evidenciar a comparação de algoritmos/configurações exigida em IA & ML:
@@ -181,12 +181,14 @@ verificável por SHA256; backup local informal não é evidência suficiente.
 Resumo operacional:
 
 - O gatilho de retreino gera apenas artefatos candidatos isolados.
-- O gate de promoção roda em modo relatório por padrão e só promove com ação
-  explícita.
-- AUC-ROC continua reportada para compatibilidade; AUC-PR decide promoção.
+- O gate de promoção, monitoramento de drift e rollback automatizado são
+  planejados; não há módulo `promotion_gate.py` implementado nesta versão.
+- AUC-ROC é a métrica principal de avaliação de churn. O comparador atual
+  ordena por average precision (coluna `auc_pr`); a política futura propõe
+  critérios adicionais para promoção, ainda não automatizados.
 - O Java BFF é o consumidor técnico da API de ML via `X-ML-Service-Token`.
-- O consultor recebe `perfil_previsto`, `risk_level`, `acao_recomendada` e
-  prioridade; a UI não deve expor probabilidade crua como linguagem principal.
+- A API retorna `perfil_previsto`, `risk_level` e `acao_recomendada`.
+  A priorização operacional é uma utilização proposta pelo consumidor da API.
 
 ## API FastAPI
 
@@ -383,6 +385,17 @@ Não commitar `.env`, datasets reais, arquivos em `data/raw`,
 `data/processed`, `models/*.joblib`, URLs assinadas ou segredos usados no Azure.
 
 ## Observação para Avaliação Acadêmica
+
+Consulte [a matriz da rubrica e conclusão](docs/ia_ml_requisitos.md) e
+[as notas da entrega acadêmica](docs/release_sprint3.md).
+O CSV de comparação seleciona `RandomForest_Balanced` por average precision;
+o pipeline de inferência permanece configurado para `RandomForest_Calibrated`.
+Não houve promoção automática do vencedor da comparação. A avaliação usa
+holdout aleatório estratificado, e não comprova generalização temporal.
+
+Para retornar nomes dos segmentos, disponibilize também
+`cluster_segment_map.json` ao lado do segmentador em `MODELS_DIR`.
+O download dos dois arquivos `.joblib` sozinho não provisiona esse mapeamento.
 
 Por questões de tamanho e segurança, os datasets reais e artefatos `.joblib` não são versionados no GitHub. Para reprodução completa, é necessário disponibilizar os arquivos em `data/raw/`, configurar `CHURN_MODEL_URL` e `PERFIL_MODEL_URL` com os artefatos treinados, ou executar o pipeline completo a partir dos dados brutos autorizados. Sem os artefatos de modelo, a API sobe parcialmente para inspeção via `/` e `/health`, mas os endpoints de predição dependem dos arquivos `.joblib`.
 
