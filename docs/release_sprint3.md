@@ -95,5 +95,16 @@ O ambiente virtual anterior apresentou bloqueios de leitura; a execução
 validada utilizou o Python do sistema. Python 3.11 permanece a versão
 declarada para reprodução, ainda sem nova validação em ambiente limpo.
 
-Os testes não comprovam a integridade dos modelos reais ou a inferência com
-eles. Não houve retreino real nem promoção de modelos nesta validação.
+Separadamente da suíte, os checksums dos dois modelos reais foram confirmados
+contra os respectivos arquivos `.sha256`:
+
+- Churn: `cdb66a10f6a9191d5dee93de0c0a137feef28c6f64bae1bee16eec0e8fbcfd0e`.
+- K-Means: `555f8adf133c2b01556839b2988f4cae524d756d7de3ac5f85b52cfae63415df`.
+
+Um smoke test local autenticado, com cópias temporárias dos modelos reais,
+retornou HTTP 200 em `/predict` e `/predict-batch`. O exemplo do schema retornou
+probabilidade 0,886767, risco `high`, segmento `multidealer` e ação preenchida;
+o lote preservou os dois identificadores enviados. Isso confirma carregamento
+e funcionamento nesse exemplo, não recalcula métricas do holdout nem comprova
+que os artefatos pertencem à execução do notebook.
+Não houve retreino real, integração Azure nem promoção de modelos.

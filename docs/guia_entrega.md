@@ -44,8 +44,9 @@ Execute em cópia isolada: a pipeline grava modelos e relatórios.
 
 Confira os checksums antes de carregar os modelos. Não substitua esses
 arquivos por artefatos de execuções diferentes. O pacote atual não inclui
-esses modelos: a verificação dos arquivos locais está pendente de acesso ao
-conteúdo disponível sob demanda no macOS.
+esses modelos: eles devem ser obtidos no pacote separado de artefatos aprovado
+para a entrega. Os dois checksums locais foram confirmados e a inferência
+individual e em lote foi validada com esses arquivos, usando cópias temporárias.
 
 Configure `SECRET_KEY` e `ML_SERVICE_TOKEN` no ambiente local, conforme README,
 e execute:
