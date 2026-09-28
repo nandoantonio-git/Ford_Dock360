@@ -96,6 +96,62 @@ Registra os artefatos já gerados dos experimentos de churn, segmentação
 K-Means. Esse passo é evidência de experimentação; não é necessário para a API
 em runtime.
 
+Para evidenciar a comparação de algoritmos/configurações exigida em IA & ML:
+
+```bash
+python -m src.pipeline.mlflow_tracking --only churn-comparison \
+  --comparison-output reports/model_comparison_churn.csv
+```
+
+Esse comando compara Logistic Regression balanceada, RandomForest balanceado e
+RandomForest calibrado, registrando AUC-ROC, AUC-PR, precision, recall e F1 no
+MLflow e na tabela `reports/model_comparison_churn.csv`.
+
+## Evidências Visuais
+
+As imagens abaixo são geradas pelo pipeline/notebooks e servem como prints de
+apoio para a banca.
+
+### EDA da base bruta
+
+Distribuição dos modelos na base de ordens de serviço:
+
+![Distribuição por modelo](reports/base1_modelos.png)
+
+Distribuição por tipo de serviço:
+
+![Distribuição por tipo de serviço](reports/base1_service_type.png)
+
+### EDA da base modelável
+
+Distribuição do target de churn:
+
+![Distribuição de churn](reports/base2_distribuicao_churn.png)
+
+Correlação entre features comportamentais e churn:
+
+![Correlação com churn](reports/base2_correlacao_churn.png)
+
+### Segmentação comportamental
+
+Escolha de `k` por elbow/silhouette:
+
+![Elbow e silhouette](reports/elbow_silhouette_pos_venda.png)
+
+Visualização PCA dos clusters:
+
+![Clusters por PCA](reports/clusters_pca_pos_venda.png)
+
+### Classificação de churn
+
+Curva Precision-Recall:
+
+![Curva Precision-Recall](reports/precision_recall_churn_pos_venda.png)
+
+Matriz de confusão:
+
+![Matriz de confusão](reports/confusion_matrix_churn_pos_venda.png)
+
 ## Notas de Entrega
 
 - Arquivos de experimentos antigos foram removidos do escopo atual.
@@ -105,6 +161,32 @@ em runtime.
   obrigatórios do pipeline produtivo.
 - Evite reexecutar treino sem necessidade antes da entrega, pois isso altera
   modelos e checksums.
+
+## Ciclo de Vida do Modelo
+
+O ciclo de vida do Ford VinGuard está documentado em
+`docs/politica_retreino.md`. A política define retreino programado trimestral,
+validação da maturação de 18 meses do rótulo, gate champion/challenger,
+evidências em JSON + MLflow, menor privilégio e autorização explícita.
+
+A aderência aos requisitos de IA & Machine Learning da Sprint 3 está resumida
+em `docs/ia_ml_requisitos.md`, incluindo compreensão do problema, preparação
+dos dados, comparação de modelos/configurações, métricas e conclusão do modelo
+selecionado.
+
+O histórico de versões aprovadas e o procedimento de rollback seguro ficam em
+`CHANGELOG_MODELOS.md`. Rollback válido deve apontar para artefato aprovado e
+verificável por SHA256; backup local informal não é evidência suficiente.
+
+Resumo operacional:
+
+- O gatilho de retreino gera apenas artefatos candidatos isolados.
+- O gate de promoção roda em modo relatório por padrão e só promove com ação
+  explícita.
+- AUC-ROC continua reportada para compatibilidade; AUC-PR decide promoção.
+- O Java BFF é o consumidor técnico da API de ML via `X-ML-Service-Token`.
+- O consultor recebe `perfil_previsto`, `risk_level`, `acao_recomendada` e
+  prioridade; a UI não deve expor probabilidade crua como linguagem principal.
 
 ## API FastAPI
 

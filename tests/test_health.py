@@ -23,3 +23,15 @@ def test_health_no_models_dir(client):
         response = client.get("/health")
     assert response.status_code == 503
     assert response.json()["status"] == "degraded"
+
+
+def test_root_endpoint(client):
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": "ok",
+        "service": "Ford VinGuard ML API",
+        "docs": "/docs",
+        "readiness": "/health",
+    }

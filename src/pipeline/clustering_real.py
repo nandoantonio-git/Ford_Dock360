@@ -5,16 +5,13 @@ Usa somente features de servico calculadas ate a data de corte. Os nomes dos
 segmentos sao neutros e devem ser validados com negocio antes de uso comercial.
 """
 
-import matplotlib
-matplotlib.use("Agg")
-
+import argparse
 import hashlib
 import json
 import os
 from pathlib import Path
 
 import joblib
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
@@ -87,6 +84,10 @@ def _interpretar_clusters(df, labels):
 
 
 def _plot_elbow_silhouette(x):
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
     inertias = []
     silhouettes = []
     ks = range(2, 9)
@@ -125,6 +126,10 @@ def _plot_elbow_silhouette(x):
 
 
 def _plot_pca_clusters(x, labels, pipeline, mapping):
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
     x_scaled = pipeline[:-1].transform(x)
 
     # Sample para visualizacao
@@ -164,10 +169,19 @@ def _plot_pca_clusters(x, labels, pipeline, mapping):
     print(f"Salvo: {PCA_PATH}")
 
 
-def run_clustering(input_path=INPUT_PATH, n_clusters=N_CLUSTERS):
-    os.makedirs("data/processed", exist_ok=True)
-    os.makedirs("models", exist_ok=True)
+def run_clustering(input_path=INPUT_PATH, n_clusters=N_CLUSTERS, input_dir=None, output_dir="models"):
+    if input_dir:
+        input_path = os.path.join(input_dir, "snapshots_pos_venda.csv")
+        output_labels = os.path.join(input_dir, "segmentos_pos_venda.csv")
+    else:
+        output_labels = OUTPUT_LABELS
+
+    os.makedirs(os.path.dirname(output_labels), exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)
     os.makedirs("reports", exist_ok=True)
+
+    model_path = os.path.join(output_dir, "kmeans_segmentador_pos_venda.joblib")
+    segment_map_path = os.path.join(output_dir, "cluster_segment_map.json")
 
     if not os.path.exists(input_path):
         raise FileNotFoundError(f"Rode antes: python -m src.pipeline.feature_engineering_real")
@@ -197,18 +211,18 @@ def run_clustering(input_path=INPUT_PATH, n_clusters=N_CLUSTERS):
         "cluster_raw": labels,
         "segmento_pos_venda": pd.Series(labels).map(mapping),
     })
-    df_labels.to_csv(OUTPUT_LABELS, index=False)
-    print(f"\nSalvo: {OUTPUT_LABELS}")
-    joblib.dump(pipeline, MODEL_PATH, compress=3)
-    Path(MODEL_PATH).with_suffix(".sha256").write_text(
-        hashlib.sha256(Path(MODEL_PATH).read_bytes()).hexdigest()
+    df_labels.to_csv(output_labels, index=False)
+    print(f"\nSalvo: {output_labels}")
+    joblib.dump(pipeline, model_path, compress=3)
+    Path(model_path).with_suffix(".sha256").write_text(
+        hashlib.sha256(Path(model_path).read_bytes()).hexdigest()
     )
-    print(f"Salvo: {MODEL_PATH}")
+    print(f"Salvo: {model_path}")
 
     segment_map = {str(k): v for k, v in mapping.items()}
-    with open(SEGMENT_MAP_PATH, "w") as f:
+    with open(segment_map_path, "w") as f:
         json.dump(segment_map, f, indent=2)
-    print(f"Mapeamento salvo: {SEGMENT_MAP_PATH}")
+    print(f"Mapeamento salvo: {segment_map_path}")
 
     print("\n=== Distribuicao final ===")
     print(df_labels["segmento_pos_venda"].value_counts(normalize=True).round(3))
@@ -218,5 +232,20 @@ def run_clustering(input_path=INPUT_PATH, n_clusters=N_CLUSTERS):
     return df_labels, pipeline
 
 
+def _parse_args():
+    parser = argparse.ArgumentParser(description="Treina segmentador K-Means pos-venda.")
+    parser.add_argument("--input-dir", default=None)
+    parser.add_argument("--output-dir", default="models")
+    parser.add_argument("--input-path", default=INPUT_PATH)
+    parser.add_argument("--n-clusters", type=int, default=N_CLUSTERS)
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
-    run_clustering()
+    args = _parse_args()
+    run_clustering(
+        input_path=args.input_path,
+        input_dir=args.input_dir,
+        output_dir=args.output_dir,
+        n_clusters=args.n_clusters,
+    )

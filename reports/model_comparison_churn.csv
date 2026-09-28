@@ -1,0 +1,4 @@
+model_name,model_family,auc_roc,auc_pr,precision,recall,f1,param_class_weight,param_max_iter,param_n_estimators,param_max_depth,param_calibration,param_cv,selected
+RandomForest_Balanced,tree_ensemble,0.9408339029132539,0.9666486626759179,0.9452747416164771,0.8314040939114512,0.8846903270702853,balanced,,50.0,8.0,,,True
+RandomForest_Calibrated,tree_ensemble_calibrated,0.9411161655673821,0.9666188299910418,0.9057368875889118,0.8910470211235367,0.8983319047933013,balanced,,50.0,8.0,isotonic,5.0,False
+LogisticRegression_Balanced,linear,0.9379208354737433,0.9650852269709733,0.9339184680110256,0.8419985612451769,0.8855796677786567,balanced,1000.0,,,,,False

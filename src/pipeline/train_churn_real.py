@@ -5,15 +5,12 @@ Treina churn_futuro_18m usando features comportamentais calculadas somente
 ate DATA_CORTE. O target vem exclusivamente de eventos posteriores a DATA_CORTE.
 """
 
+import argparse
 import hashlib
 import os
 from pathlib import Path
 
-import matplotlib
-matplotlib.use("Agg")
-
 import joblib
-import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.compose import ColumnTransformer
@@ -22,6 +19,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.metrics import (
     ConfusionMatrixDisplay,
     PrecisionRecallDisplay,
+    average_precision_score,
     classification_report,
     confusion_matrix,
     roc_auc_score,
@@ -31,8 +29,6 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from src.pipeline.config import (
-    LEAKAGE_COLUMNS,
-    LEAKAGE_PATTERNS,
     N_ESTIMATORS,
     RANDOM_STATE,
     SNAPSHOT_FEATURES_CATEGORICAL,
@@ -40,6 +36,7 @@ from src.pipeline.config import (
     TARGET_CHURN,
     TEST_SIZE,
 )
+from src.pipeline.leakage_checks import check_leakage, check_temporal_leakage
 
 
 VINS_PATH = "data/processed/dataset_churn_pos_venda.csv"
@@ -51,24 +48,6 @@ IMPORTANCE_PATH = "reports/feature_importance_churn_pos_venda.csv"
 FEATURES_NUMERIC = SNAPSHOT_FEATURES_NUMERIC
 FEATURES_CATEGORICAL = SNAPSHOT_FEATURES_CATEGORICAL
 
-
-def check_temporal_leakage(x, feature_cols=None):
-    feature_cols = list(feature_cols or x.columns)
-    found = []
-
-    for col in feature_cols:
-        if col in LEAKAGE_COLUMNS:
-            found.append(col)
-            continue
-        if any(pattern in col.lower() for pattern in LEAKAGE_PATTERNS):
-            found.append(col)
-
-    if found:
-        raise ValueError(f"Colunas com leakage temporal em X: {found}")
-
-
-def check_leakage(x):
-    check_temporal_leakage(x)
 
 
 def _build_preprocessor():
@@ -86,14 +65,14 @@ def _build_preprocessor():
     ], remainder="drop")
 
 
-def _load_data():
-    if not os.path.exists(VINS_PATH):
+def _load_data(vins_path=VINS_PATH):
+    if not os.path.exists(vins_path):
         raise FileNotFoundError(
-            f"Arquivo nao encontrado: {VINS_PATH}\n"
+            f"Arquivo nao encontrado: {vins_path}\n"
             f"Rode antes: python -m src.pipeline.feature_engineering_real"
         )
 
-    df = pd.read_csv(VINS_PATH)
+    df = pd.read_csv(vins_path)
 
     feature_cols = FEATURES_NUMERIC + FEATURES_CATEGORICAL
     missing = [col for col in feature_cols + [TARGET_CHURN] if col not in df.columns]
@@ -140,11 +119,18 @@ def _save_feature_importance(model):
     print(f"Salvo: {IMPORTANCE_PATH}")
 
 
-def train_churn_model():
-    os.makedirs("models", exist_ok=True)
-    os.makedirs("reports", exist_ok=True)
+def train_churn_model(input_dir=None, output_dir="models", vins_path=VINS_PATH):
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
 
-    x, y = _load_data()
+    if input_dir:
+        vins_path = os.path.join(input_dir, "dataset_churn_pos_venda.csv")
+    os.makedirs(output_dir, exist_ok=True)
+    os.makedirs("reports", exist_ok=True)
+    model_path = os.path.join(output_dir, "churn_pos_venda_rf_calibrated.joblib")
+
+    x, y = _load_data(vins_path)
 
     x_train, x_test, y_train, y_test = train_test_split(
         x, y, test_size=TEST_SIZE, random_state=RANDOM_STATE, stratify=y
@@ -173,9 +159,11 @@ def train_churn_model():
     y_pred = (y_score >= 0.5).astype(int)
 
     auc = roc_auc_score(y_test, y_score)
+    auc_pr = average_precision_score(y_test, y_score)
     print("\n=== Avaliacao holdout aleatoria estratificada ===")
     print("Nota: para avaliacao final, prefira multiplos snapshots e split temporal.")
     print(f"AUC-ROC: {auc:.4f}")
+    print(f"AUC-PR: {auc_pr:.4f}")
     print(f"\n{classification_report(y_test, y_pred, target_names=['no_churn', 'churn'])}")
 
     # Anti-leakage check
@@ -201,14 +189,23 @@ def train_churn_model():
     _save_feature_importance(model)
 
     # Salvar modelo
-    joblib.dump(model, MODEL_PATH, compress=3)
-    Path(MODEL_PATH).with_suffix(".sha256").write_text(
-        hashlib.sha256(Path(MODEL_PATH).read_bytes()).hexdigest()
+    joblib.dump(model, model_path, compress=3)
+    Path(model_path).with_suffix(".sha256").write_text(
+        hashlib.sha256(Path(model_path).read_bytes()).hexdigest()
     )
-    print(f"Salvo: {MODEL_PATH}")
+    print(f"Salvo: {model_path}")
 
     return model, auc
 
 
+def _parse_args():
+    parser = argparse.ArgumentParser(description="Treina classificador de churn pos-venda.")
+    parser.add_argument("--input-dir", default=None)
+    parser.add_argument("--output-dir", default="models")
+    parser.add_argument("--input-path", default=VINS_PATH)
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
-    train_churn_model()
+    args = _parse_args()
+    train_churn_model(input_dir=args.input_dir, output_dir=args.output_dir, vins_path=args.input_path)

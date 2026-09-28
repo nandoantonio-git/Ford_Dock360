@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Ford VinGuard Model Lifecycle Evidence",
+  "type": "object",
+  "required": [
+    "cycle_id",
+    "created_at",
+    "data_corte",
+    "authorized_by",
+    "authorization_ticket",
+    "authorization_scope",
+    "checks",
+    "metrics",
+    "decision",
+    "candidate_artifacts",
+    "champion_artifacts_before"
+  ],
+  "properties": {
+    "cycle_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "data_corte": {
+      "type": "string",
+      "format": "date"
+    },
+    "label_window_months": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 18
+    },
+    "authorized_by": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authorization_ticket": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authorization_scope": {
+      "type": "string",
+      "minLength": 1
+    },
+    "candidate_dir": {
+      "type": "string"
+    },
+    "holdout_path": {
+      "type": "string"
+    },
+    "checks": {
+      "type": "object",
+      "required": [
+        "authorization_ok",
+        "maturity_ok",
+        "holdout_ok",
+        "leakage_ok",
+        "checksum_ok"
+      ],
+      "properties": {
+        "authorization_ok": { "type": "boolean" },
+        "maturity_ok": { "type": "boolean" },
+        "holdout_ok": { "type": "boolean" },
+        "leakage_ok": { "type": "boolean" },
+        "checksum_ok": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    },
+    "metrics": {
+      "type": "object",
+      "required": [
+        "auc_pr_champion",
+        "auc_pr_candidate",
+        "auc_pr_delta",
+        "auc_pr_margin_required"
+      ],
+      "properties": {
+        "auc_pr_champion": { "type": "number", "minimum": 0, "maximum": 1 },
+        "auc_pr_candidate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "auc_pr_delta": { "type": "number" },
+        "auc_pr_margin_required": { "type": "number", "minimum": 0 }
+      },
+      "additionalProperties": true
+    },
+    "decision": {
+      "type": "object",
+      "required": [
+        "approved_for_promotion",
+        "promoted",
+        "reason"
+      ],
+      "properties": {
+        "approved_for_promotion": { "type": "boolean" },
+        "promoted": { "type": "boolean" },
+        "reason": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "candidate_artifacts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/artifact" }
+    },
+    "champion_artifacts_before": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/artifact" }
+    },
+    "champion_artifacts_after": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/artifact" }
+    },
+    "mlflow": {
+      "type": "object",
+      "properties": {
+        "experiment_name": { "type": "string" },
+        "run_id": { "type": "string" },
+        "tracking_uri": { "type": "string" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "required": ["name", "path", "sha256"],
+      "properties": {
+        "name": { "type": "string" },
+        "path": { "type": "string" },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{64}$"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["champion", "challenger", "rollback_candidate"]
+        },
+        "model_type": {
+          "type": "string",
+          "enum": ["churn", "segmentation", "other"]
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

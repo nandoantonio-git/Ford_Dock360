@@ -64,9 +64,6 @@ def _current_role(
     if credentials is None:
         raise HTTPException(status_code=401, detail="Credenciais ausentes")
 
-    if _is_valid_service_token(credentials.credentials):
-        return "service"
-
     try:
         payload = jwt.decode(
             credentials.credentials,
