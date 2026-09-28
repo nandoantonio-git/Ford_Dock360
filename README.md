@@ -2,6 +2,14 @@
 
 Projeto de Machine Learning para prever risco de churn na rede Ford Brasil e apoiar a ficha de abordagem comercial (Dock 360) com perfil de cliente, probabilidade de churn e ação recomendada.
 
+## Time
+
+| Nome | RM |
+|---|---|
+| Abner Barbosa | 558468 |
+| Eduardo Dallabella | 556803 |
+| Fernando Luiz | 555201 |
+| Heloísa Real | 554535 |
 
 ## Objetivo
 
