@@ -122,6 +122,8 @@ def test_train_churn_model_grava_modelo_e_checksum(monkeypatch, tmp_path):
 
 
 def test_train_churn_model_usa_input_dir(monkeypatch, tmp_path):
+    # Todos os relatórios do treino devem ficar isolados das evidências reais.
+    monkeypatch.chdir(tmp_path)
     input_dir = tmp_path / "processed"
     input_dir.mkdir()
     (input_dir / "dataset_churn_pos_venda.csv").write_text("fake")
